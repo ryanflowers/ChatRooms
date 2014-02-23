@@ -1,0 +1,16 @@
+{
+  "name": "ChatRooms",
+  "version": "0.0.1",
+  "description": "Chat room App",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ryan Flowers",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-less": "~0.9.0",
+    "mime": "~1.2.7",
+    "socket.io": "~0.9.6"
+  }
+}
