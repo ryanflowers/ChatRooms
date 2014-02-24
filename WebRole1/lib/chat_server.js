@@ -6,7 +6,7 @@ var namesUsed = [];
 var currentRoom = {};
 
 exports.listen = function (server) {
-    io = socket.listen(server);
+    io = socketio.listen(server);
     io.set('log lvel', 1);
 
     io.sockets.on('connection', function (socket) {
@@ -17,10 +17,12 @@ exports.listen = function (server) {
         handleNameChangeAttempts(socket, nickNames, namesUsed);
         handleRoomJoining(socket);
 
-        socket.on('rooms', io.sockets.manager.rooms);
-    });
+        socket.on('rooms', function() {       
+            socket.emit('rooms', io.sockets.manager.rooms);
+        });
 
-    handleClientDisconnection(socket, nickNames, namesUsed);
+        handleClientDisconnection(socket, nickNames, namesUsed);
+    });     
 }
 
 function assignGuestName(socket, guestNumber, nickNames, namesUsed) {
@@ -73,8 +75,8 @@ function handleNameChangeAttempts(socket, nickNames, namesUsed) {
                 var previousNameIndex = namesUsed.indexOf(previousName);
                 namesUsed.push(name);
                 nickNames[socket.id] = name;
-                //delete nameUsed[previousNameIndex];
-                nameUsed.splice(previousNameIndex, previousNameIndex);
+                //delete namesUsed[previousNameIndex];
+                namesUsed.splice(previousNameIndex, previousNameIndex);
 
                 socket.emit('nameResult', {
                     success: true,
@@ -94,7 +96,7 @@ function handleNameChangeAttempts(socket, nickNames, namesUsed) {
     })
 }
 
-function handleMessageBroadcasting(socket){
+function handleMessageBroadcasting(socket, nickNames){
     socket.on('message', function (message){
         socket.broadcast.to(message.room).emit('message', {
             text:nickNames[socket.id] + ': ' + message.text
@@ -109,10 +111,10 @@ function handleRoomJoining (socket) {
     })
 }
 
-function handleClientDisconnection (socket) {
+function handleClientDisconnection (socket, nickNames, namesUsed) {
     socket.on('disconnect', function(){
-        var nameIndex = nameUsed.indexOf(nickNames[socket.id]);
-        delete nameUsed[nameIndex];
+        var nameIndex = namesUsed.indexOf(nickNames[socket.id]);
+        delete namesUsed[nameIndex];
         delete nickNames[socket.id];
     })
 }
