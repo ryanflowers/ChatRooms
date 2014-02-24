@@ -29,6 +29,7 @@ var socket = io.connect();
 $(document).ready(function() {
 	var chatApp = new Chat(socket);
 
+	//Listen for server messages and update the view accordingly.
 	socket.on('nameResult', function(result) {
 		var message;
 
@@ -65,9 +66,8 @@ $(document).ready(function() {
 			$('#send-message').focus();
 		});
 	});
-	setInterval(function() {
-		socket.emit('rooms');
-	}, 1000);
+
+	chatApp.initRoomPuller();
 
 	$('#send-message').focus();
 

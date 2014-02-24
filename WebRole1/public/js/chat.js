@@ -1,3 +1,4 @@
+/* This class is used to emit messages to the server via socket */
 var Chat = function(socket) {
 	this.socket = socket;
 }
@@ -39,3 +40,9 @@ Chat.prototype.processCommand = function(command){
 
 	return message;
 }
+
+Chat.prototype.initRoomPuller = function(){
+	setInterval(function() {
+		socket.emit('rooms');
+	}, 1000);
+};
