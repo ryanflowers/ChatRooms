@@ -1,7 +1,7 @@
 /* This class is used to emit messages to the server via socket */
 var Chat = function(socket) {
 	this.socket = socket;
-}
+};
 
 Chat.prototype.sendMessage = function(room, text) {
 	var message = {
@@ -19,7 +19,7 @@ Chat.prototype.changeRoom = function(room){
 
 Chat.prototype.processCommand = function(command){
 	var words = command.split(' ');
-	var command = words[0].substring(1, words[0].length).toLowerCase();
+	command = words[0].substring(1, words[0].length).toLowerCase();
 	var message = false;
 
 	switch(command){
@@ -39,7 +39,7 @@ Chat.prototype.processCommand = function(command){
 	}
 
 	return message;
-}
+};
 
 Chat.prototype.initRoomPuller = function(){
 	setInterval(function() {
