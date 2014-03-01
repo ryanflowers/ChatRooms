@@ -1,264 +1,147 @@
-angular.module('chatRooms', ['chatRooms.controllers']);
-/* This class is used to emit messages to the server via socket */
-var Chat = function(socket) {
-	this.socket = socket;
-};
+angular.module('chatRooms', []);
+function chatController($scope, chatService) {
 
-Chat.prototype.sendMessage = function(room, text) {
-	var message = {
-		room: room,
-		text: text
-	};
-	this.socket.emit('message', message);
-};
+	var _chatService = chatService;
 
-Chat.prototype.changeRoom = function(room){
-	this.socket.emit('join', {
-		newRoom: room
-	});
-};
-
-Chat.prototype.processCommand = function(command){
-	var words = command.split(' ');
-	command = words[0].substring(1, words[0].length).toLowerCase();
-	var message = false;
-
-	switch(command){
-		case 'join':
-		words.shift();
-		var room = words.join(' ');
-		this.changeRoom(room);
-		break;
-		case 'nick':
-		words.shift();
-		var name = words.join(' ');
-		this.socket.emit('nameAttempt', name);
-		break;
-		default:
-		message = 'Unrecognized command.';
-		break;
+	function divEscapedContentElement(message) {
+		return $('<div></div>').text(message);
 	}
 
-	return message;
-};
-
-Chat.prototype.initRoomPuller = function(){
-	setInterval(function() {
-		socket.emit('rooms');
-	}, 1000);
-};
-
-function divEscapedContentElement(message) {
-	return $('<div></div>').text(message);
-}
-
-function divSystemContentElement(message) {
-	return $('<div></div>').html('<i>' + message + '</i>');
-}
-
-function processUserInput(chatApp, socket) {
-	var message = $('#send-message').val();
-	var systemMessage;
-
-	if(message.charAt(0) == '/'){ 
-		systemMessage = chatApp.processCommand(message);
-		if(systemMessage) {
-			$('#messages').append(divSystemContentElement(systemMessage));
-		}
-	} else{
-		chatApp.sendMessage($('#room').text(), message);
-		$('#messages').append(divEscapedContentElement(message));
-		$('#messages').scrollTop($('#messages').prop('scrollHeight'));
+	function divSystemContentElement(message) {
+		return $('<div></div>').html('<i>' + message + '</i>');
 	}
-	$('#send-message').val('');
-}
 
-var socket = io.connect();
+	function processUserInput(chatService) {
+		var message = $('#send-message').val();
+		var systemMessage;
 
-$(document).ready(function() {
-	var chatApp = new Chat(socket);
-
-	//Listen for server messages and update the view accordingly.
-	socket.on('nameResult', function(result) {
-		var message;
-
-		if(result.success) {
-			message = 'You are now known as ' + result.name + '.';
-		} else{
-			message = result.message;
-		}
-		$('#messages').append(divSystemContentElement(message));
-	});
-
-	socket.on('joinResult', function(result) {
-		$('#room').text(result.room);
-		$('#messages').append(divSystemContentElement('Room changed.'));
-	});
-
-	socket.on('message', function(message) {
-		var newElement = $('<div></div>').text(message.text);
-		$('#messages').append(newElement);
-	});
-
-	socket.on('rooms', function(rooms) {
-		$('#room-list').empty();
-
-		for (var room in rooms) {
-			room = room.substring(1, room.length);
-			if(room !== ''){
-				$('#room-list').append(divEscapedContentElement(room));
+		if(message.charAt(0) == '/'){ 
+			systemMessage = chatService.processCommand(message);
+			if(systemMessage) {
+				$('#messages').append(divSystemContentElement(systemMessage));
 			}
+		} else{
+			chatService.sendMessage($('#room').text(), message);
+			$('#messages').append(divEscapedContentElement(message));
+			$('#messages').scrollTop($('#messages').prop('scrollHeight'));
 		}
+		$('#send-message').val('');
+	}
 
-		$('#room-list div').click(function() {
-			chatApp.processCommand('/join ' + $(this).text());
-			$('#send-message').focus();
+	$(document).ready(function() {
+
+		//Listen for server messages and update the view accordingly.
+		_chatService.on('nameResult', function(result) {
+			var message;
+
+			if(result.success) {
+				message = 'You are now known as ' + result.name + '.';
+			} else{
+				message = result.message;
+			}
+			$('#messages').append(divSystemContentElement(message));
+		});
+
+		_chatService.on('joinResult', function(result) {
+			$('#room').text(result.room);
+			$('#messages').append(divSystemContentElement('Room changed.'));
+		});
+
+		_chatService.on('message', function(message) {
+			var newElement = $('<div></div>').text(message.text);
+			$('#messages').append(newElement);
+		});
+
+		_chatService.on('rooms', function(rooms) {
+			$('#room-list').empty();
+
+			for (var room in rooms) {
+				room = room.substring(1, room.length);
+				if(room !== ''){
+					$('#room-list').append(divEscapedContentElement(room));
+				}
+			}
+
+			$('#room-list div').click(function() {
+				_chatService.processCommand('/join ' + $(this).text());
+				$('#send-message').focus();
+			});
+		});
+
+		_chatService.initRoomPuller();
+
+		$('#send-message').focus();
+
+		$('#send-form').submit(function() {
+			processUserInput(_chatService);
+			return false;
 		});
 	});
+}
 
-	chatApp.initRoomPuller();
-
-	$('#send-message').focus();
-
-	$('#send-form').submit(function() {
-		processUserInput(chatApp, socket);
-		return false;
-	});
-});
-
-
-angular.module('chatRooms.controllers')
-	.controller('chatController', ['$scope', '$http', function($scope, $http) {}]);
+angular.module('chatRooms')
+	.controller('chatController', ['$scope', 'chatService', chatController]);
  
-angular.module('chatRooms', ['chatRooms.controllers']);
-/* This class is used to emit messages to the server via socket */
-var Chat = function(socket) {
-	this.socket = socket;
-};
+function chatServiceProvider(socketService) {	
 
-Chat.prototype.sendMessage = function(room, text) {
-	var message = {
-		room: room,
-		text: text
+	var Chat = function(socketService) {
+		this.socket = socketService;
 	};
-	this.socket.emit('message', message);
-};
 
-Chat.prototype.changeRoom = function(room){
-	this.socket.emit('join', {
-		newRoom: room
-	});
-};
+	Chat.prototype.sendMessage = function(room, text) {
+		var message = {
+			room: room,
+			text: text
+		};
+		this.socket.emit('message', message);
+	};
 
-Chat.prototype.processCommand = function(command){
-	var words = command.split(' ');
-	command = words[0].substring(1, words[0].length).toLowerCase();
-	var message = false;
-
-	switch(command){
-		case 'join':
-		words.shift();
-		var room = words.join(' ');
-		this.changeRoom(room);
-		break;
-		case 'nick':
-		words.shift();
-		var name = words.join(' ');
-		this.socket.emit('nameAttempt', name);
-		break;
-		default:
-		message = 'Unrecognized command.';
-		break;
-	}
-
-	return message;
-};
-
-Chat.prototype.initRoomPuller = function(){
-	setInterval(function() {
-		socket.emit('rooms');
-	}, 1000);
-};
-
-function divEscapedContentElement(message) {
-	return $('<div></div>').text(message);
-}
-
-function divSystemContentElement(message) {
-	return $('<div></div>').html('<i>' + message + '</i>');
-}
-
-function processUserInput(chatApp, socket) {
-	var message = $('#send-message').val();
-	var systemMessage;
-
-	if(message.charAt(0) == '/'){ 
-		systemMessage = chatApp.processCommand(message);
-		if(systemMessage) {
-			$('#messages').append(divSystemContentElement(systemMessage));
-		}
-	} else{
-		chatApp.sendMessage($('#room').text(), message);
-		$('#messages').append(divEscapedContentElement(message));
-		$('#messages').scrollTop($('#messages').prop('scrollHeight'));
-	}
-	$('#send-message').val('');
-}
-
-var socket = io.connect();
-
-$(document).ready(function() {
-	var chatApp = new Chat(socket);
-
-	//Listen for server messages and update the view accordingly.
-	socket.on('nameResult', function(result) {
-		var message;
-
-		if(result.success) {
-			message = 'You are now known as ' + result.name + '.';
-		} else{
-			message = result.message;
-		}
-		$('#messages').append(divSystemContentElement(message));
-	});
-
-	socket.on('joinResult', function(result) {
-		$('#room').text(result.room);
-		$('#messages').append(divSystemContentElement('Room changed.'));
-	});
-
-	socket.on('message', function(message) {
-		var newElement = $('<div></div>').text(message.text);
-		$('#messages').append(newElement);
-	});
-
-	socket.on('rooms', function(rooms) {
-		$('#room-list').empty();
-
-		for (var room in rooms) {
-			room = room.substring(1, room.length);
-			if(room !== ''){
-				$('#room-list').append(divEscapedContentElement(room));
-			}
-		}
-
-		$('#room-list div').click(function() {
-			chatApp.processCommand('/join ' + $(this).text());
-			$('#send-message').focus();
+	Chat.prototype.changeRoom = function(room){
+		this.socket.emit('join', {
+			newRoom: room
 		});
-	});
+	};
 
-	chatApp.initRoomPuller();
+	Chat.prototype.processCommand = function(command){
+		var words = command.split(' ');
+		command = words[0].substring(1, words[0].length).toLowerCase();
+		var message = false;
 
-	$('#send-message').focus();
+		switch(command){
+			case 'join':
+			words.shift();
+			var room = words.join(' ');
+			this.changeRoom(room);
+			break;
+			case 'nick':
+			words.shift();
+			var name = words.join(' ');
+			this.socket.emit('nameAttempt', name);
+			break;
+			default:
+			message = 'Unrecognized command.';
+			break;
+		}
 
-	$('#send-form').submit(function() {
-		processUserInput(chatApp, socket);
-		return false;
-	});
+		return message;
+	};
+
+	Chat.prototype.initRoomPuller = function(){
+		var self = this;
+		setInterval(function() {
+			self.socket.emit('rooms');
+		}, 1000);
+	};
+
+	Chat.prototype.on = function(eventName, handler) {
+		this.socket.on(eventName, handler);
+	};
+
+	return new Chat(socketService);
+}
+angular.module('chatRooms')
+.service('chatService', ['socketService', chatServiceProvider])
+.factory('socketService', function() { //TODO: Change to service
+	var socket = io.connect();
+	return socket;
 });
-
-
-angular.module('chatRooms.controllers')
-	.controller('chatController', ['$scope', '$http', function($scope, $http) {}]);
- 

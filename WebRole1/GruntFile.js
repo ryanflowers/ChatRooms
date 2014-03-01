@@ -3,12 +3,18 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
       dist: {
-        src: ['public/js/**/*.js'],
+        //src: ['public/js/**/*.js'], 
+        src: [
+        		'public/js/bootstrap.js', 
+        		'public/js/controllers/*.js', 
+        		'public/js/models/*.js',
+        		'public/js/services/*.js'
+    		],
         dest: 'public/js/app.js'
       }
     },
     jshint: {
-      files: ['grunt.js', 'public/js/**/*.js']      //TODO: Specify or in dependacies here
+      files: ['grunt.js', 'public/js/**/*.js']      
     },
     watch: {
       files: ['<%= jshint.files %>'],

@@ -1,1 +1,1 @@
-angular.module('chatRooms', ['chatRooms.controllers']);
+angular.module('chatRooms', []);

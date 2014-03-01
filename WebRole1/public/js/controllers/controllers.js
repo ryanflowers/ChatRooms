@@ -1,4 +1,4 @@
 
-angular.module('chatRooms.controllers')
-	.controller('chatController', ['$scope', '$http', function($scope, $http) {}]);
+angular.module('chatRooms')
+	.controller('chatController', ['$scope', 'chatService', chatController]);
  
